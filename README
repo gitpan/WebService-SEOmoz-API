@@ -2,7 +2,7 @@ NAME
     WebService::SEOmoz::API - SEOmoz API
 
 VERSION
-    version 0.01
+    version 0.02
 
 SYNOPSIS
         use WebService::SEOmoz::API;
@@ -11,18 +11,18 @@ SYNOPSIS
             accessID   => $accessID,
             secretKey  => $secretKey,
             expiresInterval => $expiresInterval, # optional, default 300s
-        );
+        ) or die "Can't init the seomoz instance: " . $WebService::SEOmoz::API::errstr;
     
         my $t = $seomoz->getUrlMetrics( {
             objectURL => 'www.seomoz.org/blog',
-        } );
+        } ) or die $seomoz->errstr;
     
         $t = $seomoz->getLinks( {
             objectURL => 'www.google.com',
             Scope => 'page_to_page',
             Sort  => 'page_authority',
             Limit => 1,
-        } );
+        } ) or die $seomoz->errstr;
 
 DESCRIPTION
     <http://www.seomoz.org/api>

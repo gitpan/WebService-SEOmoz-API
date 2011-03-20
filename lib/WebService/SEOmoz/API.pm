@@ -1,25 +1,25 @@
 package WebService::SEOmoz::API;
 
 BEGIN {
-    $WebService::SEOmoz::API::VERSION = '0.01';
+    $WebService::SEOmoz::API::VERSION = '0.02';
 }
 
 # ABSTRACT: SEOmoz API
 
 use strict;
 use warnings;
-use Carp 'croak';
 use LWP::UserAgent;
 use URI::Escape qw/uri_escape/;
 use Digest::SHA;
 use JSON::Any;
+use vars qw/$errstr/;
 
 sub new {
     my $class = shift;
     my $args = scalar @_ % 2 ? shift : {@_};
 
-    $args->{accessID}  or croak 'accessID is required';
-    $args->{secretKey} or croak 'secretKey is required';
+    $args->{accessID}  or do { $errstr = 'accessID is required';  return; };
+    $args->{secretKey} or do { $errstr = 'secretKey is required'; return; };
 
     $args->{expiresInterval} ||= 300;
 
@@ -37,6 +37,8 @@ sub new {
 
     bless $args, $class;
 }
+
+sub errstr { $errstr }
 
 sub getAuthenticationStr {
     my ($self) = @_;
@@ -69,8 +71,13 @@ sub makeRequest {
 
     #    print STDERR "# get $url\n";
 
+    undef $errstr;
+
     my $resp = $self->{ua}->get($url);
-    croak $resp->status_line unless $resp->is_success;
+    unless ( $resp->is_success ) {
+        $errstr = $resp->status_line;
+        return;
+    }
 
     return $self->{json}->jsonToObj( $resp->content );
 }
@@ -79,7 +86,8 @@ sub getUrlMetrics {
     my $self = shift;
     my $args = scalar @_ % 2 ? shift : {@_};
 
-    my $objectURL = $args->{objectURL} or croak 'objectURL is required';
+    my $objectURL = $args->{objectURL}
+      or do { $errstr = 'objectURL is required'; return; };
     my $urlToFetch =
         "http://lsapi.seomoz.com/linkscape/url-metrics/"
       . uri_escape($objectURL) . "?"
@@ -98,7 +106,8 @@ sub getLinks {
     my $self = shift;
     my $args = scalar @_ % 2 ? shift : {@_};
 
-    my $objectURL = $args->{objectURL} or croak 'objectURL is required';
+    my $objectURL = $args->{objectURL}
+      or do { $errstr = 'objectURL is required'; return; };
     my $urlToFetch =
         "http://lsapi.seomoz.com/linkscape/links/"
       . uri_escape($objectURL) . "?"
@@ -121,7 +130,8 @@ sub getAnchorText {
     my $self = shift;
     my $args = scalar @_ % 2 ? shift : {@_};
 
-    my $objectURL = $args->{objectURL} or croak 'objectURL is required';
+    my $objectURL = $args->{objectURL}
+      or do { $errstr = 'objectURL is required'; return; };
     my $urlToFetch =
         "http://lsapi.seomoz.com/linkscape/anchor-text/"
       . uri_escape($objectURL) . "?"
@@ -148,7 +158,7 @@ WebService::SEOmoz::API - SEOmoz API
 
 =head1 VERSION
 
-version 0.01
+version 0.02
 
 =head1 SYNOPSIS
 
@@ -158,18 +168,18 @@ version 0.01
         accessID   => $accessID,
         secretKey  => $secretKey,
         expiresInterval => $expiresInterval, # optional, default 300s
-    );
+    ) or die "Can't init the seomoz instance: " . $WebService::SEOmoz::API::errstr;
     
     my $t = $seomoz->getUrlMetrics( {
         objectURL => 'www.seomoz.org/blog',
-    } );
+    } ) or die $seomoz->errstr;
     
     $t = $seomoz->getLinks( {
         objectURL => 'www.google.com',
         Scope => 'page_to_page',
         Sort  => 'page_authority',
         Limit => 1,
-    } );
+    } ) or die $seomoz->errstr;
 
 =head1 DESCRIPTION
 

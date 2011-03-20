@@ -10,9 +10,11 @@ use Data::Dumper;
 my $seomoz = WebService::SEOmoz::API->new(
     accessID  => $ENV{SEOmoz_ID},
     secretKey => $ENV{SEOmoz_KEY},
-);
+  )
+  or die "Can't init the seomoz instance: " . $WebService::SEOmoz::API::errstr;
 
-my $t = $seomoz->getUrlMetrics( { objectURL => 'www.seomoz.org/blog', } );
+my $t = $seomoz->getUrlMetrics( { objectURL => 'www.seomoz.org/blog', } )
+  or die $seomoz->errstr;
 print Dumper( \$t );
 
 $t = $seomoz->getLinks(
@@ -22,7 +24,7 @@ $t = $seomoz->getLinks(
         Sort      => 'page_authority',
         Limit     => 1,
     }
-);
+) or die $seomoz->errstr;
 print Dumper( \$t );
 
 1;
